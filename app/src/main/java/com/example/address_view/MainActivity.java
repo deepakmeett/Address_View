@@ -1,6 +1,8 @@
 package com.example.address_view;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -22,6 +24,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
     Button button;
@@ -44,23 +47,29 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                 getLocation();
             }
         } );
+        if (ContextCompat.checkSelfPermission( getApplicationContext(),
+                                               android.Manifest.permission.ACCESS_FINE_LOCATION )
+            != PackageManager.PERMISSION_GRANTED
+            && ActivityCompat.checkSelfPermission( getApplicationContext(),
+                                                   android.Manifest.permission.ACCESS_COARSE_LOCATION )
+               != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions( this, new String[]
+                    {Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION}, 101 );
+
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void getLocation() {
-        LocationManager locationManager = (LocationManager) getSystemService( Context.LOCATION_SERVICE );
-        if (checkSelfPermission( Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED && checkSelfPermission( Manifest.permission.ACCESS_COARSE_LOCATION ) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    Activity#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for Activity#requestPermissions for more details.
-            return;
+        try {
+            LocationManager locationManager = (LocationManager) getSystemService( Context.LOCATION_SERVICE );
+            Objects.requireNonNull( locationManager ).requestLocationUpdates
+                    ( LocationManager.NETWORK_PROVIDER, 5000, 5, this );
+
+        } catch (SecurityException e) {
+            e.printStackTrace();
         }
-        assert locationManager != null;
-        locationManager.requestLocationUpdates( LocationManager.NETWORK_PROVIDER, 500, 5, this );
     }
 
     @Override
